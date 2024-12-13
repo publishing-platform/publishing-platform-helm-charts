@@ -47,4 +47,5 @@ jobs:
       - uses: actions/checkout@v4
         with:
           show-progress: false
-      - run: yamllint --version && yamllint -f github .          
+      - run: yamllint --version && yamllint -f github .
+
