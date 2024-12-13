@@ -1,0 +1,12 @@
+apiVersion: v1
+entries:
+  cluster-secret-store:
+  - apiVersion: v2
+    created: "2024-12-13T22:14:20.29357264Z"
+    description: An external-secrets ClusterSecretStore backed by AWS SecretsManager.
+    digest: a7ad7d36dd2126df3aa9cc6895378008265e15ded4e5d01a3ee1c84f5acbd50e
+    name: cluster-secret-store
+    urls:
+    - https://github.com/publishing-platform/publishing-platform-helm-charts/releases/download/cluster-secret-store-0.1.1/cluster-secret-store-0.1.1.tgz
+    version: 0.1.1
+generated: "2024-12-13T22:14:20.293585875Z"
