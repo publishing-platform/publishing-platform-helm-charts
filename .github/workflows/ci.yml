@@ -48,4 +48,3 @@ jobs:
         with:
           show-progress: false
       - run: yamllint --version && yamllint -f github .
-
