@@ -1,0 +1,50 @@
+name: linting
+on: [push]
+jobs:
+  chart-testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+          show-progress: false
+
+      - uses: azure/setup-helm@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2
+        with:
+          version: v3.8.0
+
+      - name: Run chart-testing (lint)
+        run: ct lint --config ct.yml
+
+      - name: Helm template
+        run: |
+          mkdir helm-dist
+          for c in charts/*; do
+            helm template "$(basename "$c")" "$c" --output-dir helm-dist
+          done
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+      - uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38  # 2.0.0
+        env:
+          SHELLCHECK_OPTS: -xP SCRIPTDIR
+
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+      - run: yamllint --version && yamllint -f github .          
