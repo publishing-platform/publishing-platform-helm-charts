@@ -9,4 +9,13 @@ entries:
     urls:
     - https://github.com/publishing-platform/publishing-platform-helm-charts/releases/download/cluster-secret-store-0.1.1/cluster-secret-store-0.1.1.tgz
     version: 0.1.1
-generated: "2024-12-13T22:14:20.293585875Z"
+  cluster-secrets:
+  - apiVersion: v2
+    created: "2024-12-14T14:37:08.580529035Z"
+    description: A Helm chart for defining ExternalSecrets for cluster-wide services.
+    digest: 66756286858acf75c81ef5d2837929e2728d239474f5bc9f5bc545afe3e380c7
+    name: cluster-secrets
+    urls:
+    - https://github.com/publishing-platform/publishing-platform-helm-charts/releases/download/cluster-secrets-0.9.5/cluster-secrets-0.9.5.tgz
+    version: 0.9.5
+generated: "2024-12-14T14:37:08.580547931Z"
