@@ -1,0 +1,8 @@
+awsAccountId:
+publishingPlatformEnvironment:
+argocdUrl:
+argoWorkflowsUrl:
+argoEventsHost:
+rbacTeams:
+  read_only:
+  read_write:
