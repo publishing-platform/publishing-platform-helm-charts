@@ -1,7 +1,7 @@
 # Defaults for all apps in this environment. These can be overridden for
 # individual apps below.
 
-govukEnvironment: production
+publishingPlatformEnvironment: production
 externalDomainSuffix: publishing-platform.co.uk
 k8sExternalDomainSuffix: eks.production.publishing-platform.top
 publishingDomainSuffix: production.publishing.service.publishing-platform.co.uk
