@@ -1,0 +1,12 @@
+# Defaults for all apps in this environment. These can be overridden for
+# individual apps below.
+
+govukEnvironment: production
+externalDomainSuffix: publishing-platform.co.uk
+k8sExternalDomainSuffix: eks.production.publishing-platform.top
+publishingDomainSuffix: production.publishing.service.publishing-platform.co.uk
+assetsDomain: assets.production.publishing.service.publishing-platform.co.uk
+
+awsAccountId: "761018850167"
+
+replicaCount: 3
