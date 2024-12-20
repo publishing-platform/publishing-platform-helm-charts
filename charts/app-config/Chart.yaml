@@ -3,4 +3,4 @@
 apiVersion: v2
 name: app-config
 description: Configuration of apps managed by ArgoCD.
-version: 1.0.2
+version: 1.0.0
