@@ -19,7 +19,7 @@ spec:
             annotations:
               eks.amazonaws.com/role-arn: arn:aws:iam::{{ .Values.awsAccountId }}:role/cluster-autoscaler-publishing-platform
         autoDiscovery:
-          clusterName: govuk
+          clusterName: publishing-platform
           enabled: true
         extraArgs:
           balance-similar-node-groups: true
