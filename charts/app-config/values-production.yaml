@@ -10,3 +10,15 @@ assetsDomain: assets.production.publishing.service.publishing-platform.co.uk
 awsAccountId: "761018850167"
 
 replicaCount: 3
+workers:
+  replicaCount: 3
+
+# Apps for Argo CD to deploy, along with any app-specific Helm values.
+
+publishingPlatformApplications:
+  - name: argo-services
+    chartPath: charts/argo-services
+    postSyncWorkflowEnabled: "false"
+    helmValues:
+      nextEnvironment: ""
+      enableWebhookIngress: true
