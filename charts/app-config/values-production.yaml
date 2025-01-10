@@ -37,7 +37,7 @@ publishingPlatformApplications:
       ingress:
         enabled: true
         annotations:
-          # <<: [*alb-ingress-defaults, *alb-ingress-waf-ruleset-backend] # TODO - uncomment when implemented
+          # <<: [*alb-ingress-defaults, *alb-ingress-waf-ruleset-backend] # TODO -uncomment
           external-dns.alpha.kubernetes.io/hostname: signon.{{ .Values.k8sExternalDomainSuffix }}
         hosts:
           - name: signon.{{ .Values.publishingDomainSuffix }}
