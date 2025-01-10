@@ -1,0 +1,27 @@
+# This file is pulled into templates/argocd-notifications/cm.yaml to avoid
+# nesting template languages. Helm uses Go and Argo uses Jinja2. Both use the
+# `{{}}` syntax.
+service.webhook.argo_events: |
+  headers:
+  - name: "Content-Type"
+    value: "application/json"
+  - name: Authorization
+    value: Bearer $argo_events_webhook_token
+  url: "http://argo-workflows-server.cluster-services.svc.cluster.local:2746"
+template.send-argo-events-webhook: |
+  webhook:
+    argo_events:
+      body: |
+        {
+          "application": "{{.app.metadata.name}}",
+          "state": "{{.app.status.operationState.phase}}",
+          "repoName": "{{.app.metadata.annotations.repoName}}",
+          "imageTag": "{{.app.metadata.annotations.imageTag}}"
+        }
+      method: "POST"
+      path: "/api/v1/events/apps/post-sync"
+trigger.on-deployed: |
+  - send: ["send-argo-events-webhook"]
+    oncePer: 'app.status.operationState.syncResult.revision'
+    when: "app.status.operationState.phase in ['Succeeded'] and app.status.health.status
+      == 'Healthy' and app.metadata.annotations['postSyncWorkflowEnabled'] == 'true' "

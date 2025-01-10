@@ -1,0 +1,167 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: post-sync
+spec:
+  entrypoint: handle-sync-event
+  onExit: exit-handler
+  retryStrategy:
+    expression: "asInt(lastRetry.exitCode) > 1"
+    limit: 3
+    backoff:
+      duration: "2m"
+      factor: 2
+      maxDuration: "16m"
+  arguments:
+    parameters:
+      - name: application
+      - name: repoName
+      - name: imageTag
+  podSpecPatch: |
+    containers:
+      - name: main
+        resources:
+          limits:
+            memory: 2Gi
+  templates:
+    - name: handle-sync-event
+      podSpecPatch: '{"containers":[{"name":"main","resources":{"limits":{"cpu":2,"memory":"2Gi"},"requests":{"cpu":1,"memory":"1Gi"}}}]}'
+      dag:
+        tasks:
+    {{ if .Values.nextEnvironment }}
+          - name: check-for-promotion
+            when: "{{"'{{workflow.parameters.application}}' !~ '^draft-'"}}"
+            template: check-for-promotion
+            arguments:
+              parameters:
+                - name: environment
+                  value: "{{ .Values.publishingPlatformEnvironment }}"
+                - name: repoName
+                  value: "{{"{{workflow.parameters.repoName}}"}}"
+          - name: promote-release
+            depends: check-for-promotion.Succeeded
+            when: "{{"'{{tasks.check-for-promotion.outputs.result}}' == 'true'"}}"
+            template: send-webhook
+            arguments:
+              parameters:
+                - name: environment
+                  value: "{{ .Values.nextEnvironment }}"
+                - name: repoName
+                  value: "{{"{{workflow.parameters.repoName}}"}}"
+                - name: imageTag
+                  value: "{{"{{workflow.parameters.imageTag}}"}}"
+                - name: promoteDeployment
+                  value: "true"
+
+    - name: check-for-promotion
+      inputs:
+        parameters:
+        - name: environment
+        - name: repoName
+      script:
+        image: {{ $.Values.awsAccountId }}.dkr.ecr.{{ $.Values.awsRegion }}.amazonaws.com/github/publishing-platform/toolbox:latest
+        command: [/bin/bash]
+        env:
+          - name: ENVIRONMENT
+            value: "{{"{{inputs.parameters.environment}}"}}"
+          - name: REPO_NAME
+            value: "{{"{{inputs.parameters.repoName}}"}}"
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: publishing-platform-ci-github-creds
+                key: token
+        source: |
+          {{- .Files.Get "scripts/check-for-promotion.sh" | nindent 14 }}
+    - name: send-webhook
+      inputs:
+        parameters:
+        - name: environment
+        - name: repoName
+        - name: imageTag
+        - name: promoteDeployment
+      script:
+        image: curlimages/curl
+        command:
+          - sh
+        source: >
+          curl -s "${WEBHOOK_URL}/update-image-tag" \
+            -H "Authorization: Bearer ${WEBHOOK_TOKEN}" \
+            --json '{
+              "environment": "{{"{{inputs.parameters.environment}}"}}",
+              "repoName": "{{"{{inputs.parameters.repoName}}"}}",
+              "imageTag": "{{"{{inputs.parameters.imageTag}}"}}",
+              "promoteDeployment": "{{"{{inputs.parameters.promoteDeployment}}"}}"
+            }'
+        env:
+          - name: WEBHOOK_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: deploy-image-webhook-endpoint
+                key: token
+          - name: WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+                name: deploy-image-webhook-endpoint
+                key: url
+    {{- end }}
+
+    - name: parse-failures
+      inputs: {}
+      outputs:
+        parameters:
+          - name: message
+            valueFrom:
+              path: /tmp/message.txt
+      script:
+        image: {{ $.Values.awsAccountId }}.dkr.ecr.{{ $.Values.awsRegion }}.amazonaws.com/github/publishing-platform/toolbox:latest
+        command:
+          - /bin/bash
+        volumeMounts:
+          - name: tmp
+            mountPath: /tmp
+        resources: {}
+        source: >
+          #!/usr/bin/env bash
+
+          echo {{"{{workflow.failures}}"}} | jq -r 'group_by(.templateName) | map({templateName: .[0].templateName, errorMessages: [.[].message | select(length > 0)] | unique}) | map("- \(.templateName): " + (["\(.errorMessages[])"] | join(",")) ) | .[]' > /tmp/message.txt
+      volumes:
+        - name: tmp
+          emptyDir: {}
+    - name: exit-handler
+      steps:
+        - - name: parse-failures
+            template: parse-failures
+            when: "{{"{{workflow.status}}"}} != Succeeded"
+        - - name: notify-slack
+            when: "{{"{{workflow.status}}"}} != Succeeded"
+            templateRef:
+              name: notify-slack
+              template: notify-slack
+            arguments:
+              parameters:
+                - name: slackChannel
+                  # NOTE: Change to {{"{{workflow.parameters.slackChannel}}"}} to
+                  # send to team slack channel.
+                  value: "publishing-platform-deploy-alerts"
+                - name: text
+                  value: "Post-deploy workflow for {{"{{workflow.parameters.application}}"}} in {{ .Values.publishingPlatformEnvironment }} has {{"{{= sprig.lower(workflow.status) }}"}}. \n\n {{"{{ steps.parse-failures.outputs.parameters.message }}"}}"
+                - name: blocks
+                  value: |
+                    [{
+                      "type": "section",
+                      "text": {
+                          "type": "mrkdwn",
+                          "text": "Post-deploy workflow for {{"{{workflow.parameters.application}}"}} in {{ .Values.publishingPlatformEnvironment }} has {{"{{= sprig.lower(workflow.status) }}"}}. \n\n {{"{{ steps.parse-failures.outputs.parameters.message }}"}}"
+                      },
+                      "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "View workflow",
+                            "emoji": true
+                        },
+                        "url": "https://argo-workflows.{{ .Values.k8sExternalDomainSuffix }}/workflows/apps/{{"{{ workflow.name }}"}}",
+                        "action_id": "view-workflow"
+                      }
+                    }]

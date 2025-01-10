@@ -1,0 +1,71 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: update-image-tag
+spec:
+  entrypoint: update-image-tag
+  arguments:
+    parameters:
+      - name: environment
+      - name: repoName
+      - name: imageTag
+      - name: promoteDeployment
+  templates:
+    - name: update-image-tag
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "1"
+          factor: "2"
+          maxDuration: "1m"
+      inputs:
+        parameters:
+          - name: environment
+          - name: repoName
+          - name: imageTag
+          - name: promoteDeployment
+            default: "false"
+      script:
+        image: {{ $.Values.awsAccountId }}.dkr.ecr.{{ $.Values.awsRegion }}.amazonaws.com/github/publishing-platform/toolbox:latest
+        command: [/bin/bash]
+        volumeMounts:
+          - name: tmp
+            mountPath: /tmp
+        env:
+          - name: GIT_NAME
+            valueFrom:
+              secretKeyRef:
+                name: publishing-platform-ci-github-creds
+                key: username
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: publishing-platform-ci-github-creds
+                key: token
+          - name: GIT_CONFIG_GLOBAL
+            value: "/tmp/.gitconfig"
+          - name: GH_CONFIG_DIR
+            value: "/tmp"
+          - name: IMAGE_TAG
+            value: "{{"{{inputs.parameters.imageTag}}"}}"
+          - name: ENVIRONMENT
+            value: "{{"{{inputs.parameters.environment}}"}}"
+          - name: REPO_NAME
+            value: "{{"{{inputs.parameters.repoName}}"}}"
+          - name: PROMOTE_DEPLOYMENT
+            value: "{{"{{inputs.parameters.promoteDeployment}}"}}"
+        source: |
+          {{- .Files.Get "scripts/update-image-tag.sh" | nindent 14 }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+  podSpecPatch: |
+    containers:
+      - resources:
+          limits:
+            cpu: 1
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+            

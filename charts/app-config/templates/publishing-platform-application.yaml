@@ -12,8 +12,8 @@ metadata:
   annotations:
     repoName: "{{ $reponame }}"
     imageTag: "{{ $imageTag }}"
-    # notifications.argoproj.io/subscribe.on-deployed.argo_events: "" # TODO: investigate notifications - this may require uncommenting
-    # notifications.argoproj.io/subscribe.deployment.grafana: "deployment|{{ .name }}" # TODO: investigate notifications - this may require uncommenting
+    notifications.argoproj.io/subscribe.on-deployed.argo_events: ""
+    # notifications.argoproj.io/subscribe.deployment.grafana: "deployment|{{ .name }}" # TODO: uncomment once grafana is set up
     postSyncWorkflowEnabled: "{{ .postSyncWorkflowEnabled | default "true" }}"
 spec:
   project: publishing-platform

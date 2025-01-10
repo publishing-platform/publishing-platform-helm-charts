@@ -1,0 +1,65 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: deploy-image
+spec:
+  entrypoint: deploy-image
+  onExit: exit-handler
+  arguments:
+    parameters:
+      - name: environment
+      - name: repoName
+      - name: imageTag
+      - name: promoteDeployment
+  templates:
+    - name: deploy-image
+      steps:
+        - - name: update-image-tag
+            templateRef:
+              name: update-image-tag
+              template: update-image-tag
+            arguments:
+              parameters:
+                - name: environment
+                  value: "{{"{{workflow.parameters.environment}}"}}"
+                - name: repoName
+                  value: "{{"{{workflow.parameters.repoName}}"}}"
+                - name: imageTag
+                  value: "{{"{{workflow.parameters.imageTag}}"}}"
+                - name: promoteDeployment
+                  value: "{{"{{workflow.parameters.promoteDeployment}}"}}"
+
+    - name: exit-handler
+      steps:
+        - - name: notify-slack
+            when: "{{"{{workflow.status}}"}} != Succeeded"
+            templateRef:
+              name: notify-slack
+              template: notify-slack
+            arguments:
+              parameters:
+                - name: slackChannel
+                  # NOTE: Change to {{"{{workflow.parameters.slackChannel}}"}} to
+                  # send to team slack channel.
+                  value: "publishing-platform-deploy-alerts"
+                - name: text
+                  value: "Deploy image workflow for {{"{{workflow.parameters.repoName}}"}} to {{"{{workflow.parameters.environment}}"}} has {{"{{= sprig.lower(workflow.status) }}"}}."
+                - name: blocks
+                  value: |
+                    [{
+                      "type": "section",
+                      "text": {
+                          "type": "mrkdwn",
+                          "text": "Deploy image workflow for {{"{{workflow.parameters.repoName}}"}} to {{"{{workflow.parameters.environment}}"}} has {{"{{= sprig.lower(workflow.status) }}"}}."
+                      },
+                      "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "View workflow",
+                            "emoji": true
+                        },
+                        "url": "https://argo-workflows.{{ .Values.k8sExternalDomainSuffix }}/workflows/apps/{{"{{ workflow.name }}"}}",
+                        "action_id": "view-workflow"
+                      }
+                    }]
