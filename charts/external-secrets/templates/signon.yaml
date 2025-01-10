@@ -38,7 +38,7 @@ spec:
     kind: ClusterSecretStore
   target:
     deletionPolicy: {{ .Values.externalSecrets.deletionPolicy }}
-    name: active-record-encryption
+    name: signon
   dataFrom:
     - extract:
         key: publishing-platform/signon
