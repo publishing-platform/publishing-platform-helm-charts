@@ -1,0 +1,29 @@
+# Reloader will automatically roll out deployments etc. which refer to this
+# configmap upon any change.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: publishing-platform-apps-env
+  labels:
+    {{- include "app-config.labels" . | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >
+      Environment variables applied to every Publishing Platform app.
+data:
+  AWS_REGION: {{ .Values.awsRegion }}
+  BOOTSNAP_READONLY: "1"
+  PUBLISHING_PLATFORM_APP_DOMAIN: ""
+  PUBLISHING_PLATFORM_APP_DOMAIN_EXTERNAL: {{ .Values.publishingDomainSuffix }}
+  PUBLISHING_PLATFORM_ASSET_ROOT: https://{{ .Values.assetsDomain }}
+  PUBLISHING_PLATFORM_CSP_REPORT_URI: {{ .Values.cspReportURI | quote }}
+  PUBLISHING_PLATFORM_ENVIRONMENT: {{ .Values.publishingPlatformEnvironment }}
+  PUBLISHING_PLATFORM_ENVIRONMENT_NAME: {{ .Values.publishingPlatformEnvironment }}
+
+  PUBLISHING_PLATFORM_WEBSITE_ROOT: https://www.{{ .Values.externalDomainSuffix }}
+  PUBLISHING_PLATFORM_LOCATION_UNPREFIXABLE_HOSTS: asset-manager,signon
+  PUBLISHING_PLATFORM_LOCATION_SERVICE_ASSETS_URI: https://{{ .Values.assetsDomain }}
+  PUBLISHING_PLATFORM_LOCATION_SERVICE_DRAFT_ASSETS_URI: https://draft-assets.{{ .Values.publishingDomainSuffix }}
+
+  RAILS_LOG_TO_STDOUT: "true"
+  SENTRY_CURRENT_ENV: {{ .Values.publishingPlatformEnvironment }}
+  PUBLISHING_PLATFORM_RAILS_JSON_LOGGING: "true"
