@@ -22,3 +22,81 @@ publishingPlatformApplications:
     helmValues:
       nextEnvironment: ""
       enableWebhookIngress: true
+
+  - name: external-secrets
+    chartPath: charts/external-secrets
+    postSyncWorkflowEnabled: "false"
+
+  - name: signon
+    helmValues:
+      dbMigrationEnabled: true
+      workers:
+        enabled: true
+      redis:
+        enabled: true
+      ingress:
+        enabled: true
+        annotations:
+          # <<: [*alb-ingress-defaults, *alb-ingress-waf-ruleset-backend] # TODO - uncomment when implemented
+          external-dns.alpha.kubernetes.io/hostname: signon.{{ .Values.k8sExternalDomainSuffix }}
+        hosts:
+          - name: signon.{{ .Values.publishingDomainSuffix }}
+      # cronTasks: # TODO - uncomment when implemented
+      #   - name: delete-expired-oauth-grants
+      #     task: "oauth_access_grants:delete_expired"
+      #     schedule: "22 12 * * 0"
+      #     serviceAccount: signon
+      #     serviceAccount: signon
+      #   - name: fetch-organisations
+      #     task: "organisations:fetch"
+      #     schedule: "11 3 * * *"
+      #     serviceAccount: signon
+      #   - name: send-suspension-reminders
+      #     task: "users:send_suspension_reminders"
+      #     schedule: "57 6 * * *"
+      #     serviceAccount: signon
+      #   - name: suspend-inactive-users
+      #     task: "users:suspend_inactive"
+      #     schedule: "27 4 * * *"
+      #     serviceAccount: signon
+      #   - name: sync-app-secrets-to-k8s
+      #     task: "kubernetes:sync_app_secrets"
+      #     schedule: "8 1 * * *"
+      #     serviceAccount: signon
+      #   - name: sync-token-secrets-to-k8s
+      #     task: "kubernetes:sync_token_secrets"
+      #     schedule: "9 1 * * *"
+      #     serviceAccount: signon
+      extraEnv:
+        - name: INSTANCE_NAME
+          value: production
+        - name: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+          valueFrom:
+            secretKeyRef:
+              name: signon
+              key: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+        - name: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+          valueFrom:
+            secretKeyRef:
+              name: signon
+              key: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+        - name: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+          valueFrom:
+            secretKeyRef:
+              name: signon
+              key: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: signon-postgres
+              key: DATABASE_URL
+        - name: DEVISE_PEPPER
+          valueFrom:
+            secretKeyRef:
+              name: signon
+              key: DEVISE_PEPPER
+        - name: DEVISE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: signon
+              key: DEVISE_SECRET_KEY
