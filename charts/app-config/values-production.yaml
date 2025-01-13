@@ -13,6 +13,35 @@ replicaCount: 3
 workers:
   replicaCount: 3
 
+_alb-ingress-defaults: &alb-ingress-defaults
+  alb.ingress.kubernetes.io/scheme: internet-facing
+  alb.ingress.kubernetes.io/target-type: ip
+  alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+  alb.ingress.kubernetes.io/ssl-redirect: "443"
+  alb.ingress.kubernetes.io/healthcheck-path: /readyz
+  alb.ingress.kubernetes.io/load-balancer-name: "{{ .Release.Name }}"
+  alb.ingress.kubernetes.io/load-balancer-attributes: >
+    access_logs.s3.enabled=true,
+    access_logs.s3.bucket=publishing-platform-{{ .Values.publishingPlatformEnvironment }}-aws-logging,
+    access_logs.s3.prefix=elb/{{ .Release.Name }}
+
+_alb-ingress-waf-ruleset-www: &alb-ingress-waf-ruleset-www
+  alb.ingress.kubernetes.io/wafv2-acl-arn: >-
+    {{ .Values.cachePublicWebAclArn }}
+
+_alb-ingress-waf-ruleset-backend: &alb-ingress-waf-ruleset-backend
+  alb.ingress.kubernetes.io/wafv2-acl-arn: >-
+    {{ .Values.backendPublicWebAclArn }}
+
+_alb-ingress-group-backend: &alb-ingress-group-backend
+  <<: *alb-ingress-waf-ruleset-backend
+  alb.ingress.kubernetes.io/group.name: backend
+  alb.ingress.kubernetes.io/load-balancer-name: backend
+  alb.ingress.kubernetes.io/load-balancer-attributes: >
+    access_logs.s3.enabled=true,
+    access_logs.s3.bucket=publishing-platform-{{ .Values.publishingPlatformEnvironment }}-aws-logging,
+    access_logs.s3.prefix=elb/backend  
+
 # Apps for Argo CD to deploy, along with any app-specific Helm values.
 
 publishingPlatformApplications:
@@ -37,7 +66,7 @@ publishingPlatformApplications:
       ingress:
         enabled: true
         annotations:
-          # <<: [*alb-ingress-defaults, *alb-ingress-waf-ruleset-backend] # TODO -uncomment
+          <<: [*alb-ingress-defaults, *alb-ingress-waf-ruleset-backend]
           external-dns.alpha.kubernetes.io/hostname: signon.{{ .Values.k8sExternalDomainSuffix }}
         hosts:
           - name: signon.{{ .Values.publishingDomainSuffix }}
