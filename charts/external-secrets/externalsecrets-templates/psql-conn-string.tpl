@@ -1,1 +1,1 @@
-postgresql://{{ .username | toString }}:{{ .password | toString }}@{{ .host | toString }}
+postgresql://{{ .postgresUsername | toString }}:{{ .postgresPassword | toString }}@{{ .postgresHost | toString }}
