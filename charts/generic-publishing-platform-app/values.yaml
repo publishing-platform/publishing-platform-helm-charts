@@ -73,7 +73,7 @@ nginxResources:
     memory: 1Gi
   requests:
     cpu: 50m
-    memory: 512Mi    
+    memory: 512Mi
 
 # dnsConfig is passed directly into the pod specs in the app and worker
 # deployment templates.
@@ -109,4 +109,4 @@ rails:
 
 externalSecrets:
   deletionPolicy: Delete
-  refreshInterval: 1h  # Be kind to etcd and don't set this too short.  
+  refreshInterval: 1h  # Be kind to etcd and don't set this too short.

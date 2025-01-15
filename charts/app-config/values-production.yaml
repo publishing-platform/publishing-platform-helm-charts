@@ -20,6 +20,7 @@ _alb-ingress-defaults: &alb-ingress-defaults
   alb.ingress.kubernetes.io/ssl-redirect: "443"
   alb.ingress.kubernetes.io/healthcheck-path: /readyz
   alb.ingress.kubernetes.io/load-balancer-name: "{{ .Release.Name }}"
+  # yamllint disable rule:line-length
   alb.ingress.kubernetes.io/load-balancer-attributes: >
     access_logs.s3.enabled=true,
     access_logs.s3.bucket=publishing-platform-{{ .Values.publishingPlatformEnvironment }}-aws-logging,
@@ -37,10 +38,11 @@ _alb-ingress-group-backend: &alb-ingress-group-backend
   <<: *alb-ingress-waf-ruleset-backend
   alb.ingress.kubernetes.io/group.name: backend
   alb.ingress.kubernetes.io/load-balancer-name: backend
+  # yamllint disable rule:line-length
   alb.ingress.kubernetes.io/load-balancer-attributes: >
     access_logs.s3.enabled=true,
     access_logs.s3.bucket=publishing-platform-{{ .Values.publishingPlatformEnvironment }}-aws-logging,
-    access_logs.s3.prefix=elb/backend  
+    access_logs.s3.prefix=elb/backend
 
 # Apps for Argo CD to deploy, along with any app-specific Helm values.
 
