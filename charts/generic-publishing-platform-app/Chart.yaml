@@ -1,0 +1,4 @@
+apiVersion: v2
+name: generic-publishing-platform-app
+description:  A reusable Helm chart suitable for most Publishing Platform apps.
+version: 1.0.0
