@@ -1,3 +1,13 @@
+# Default/example values for a Rails application.
+
+service:
+  type: NodePort
+  annotations: {}
+  port: 80
+
+ingress:
+  enabled: false
+
 # appEnabled determines whether the web app Deployment is created.
 appEnabled: true
 replicaCount: 2
