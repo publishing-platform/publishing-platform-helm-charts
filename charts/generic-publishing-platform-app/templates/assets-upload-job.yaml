@@ -1,0 +1,85 @@
+{{- if .Values.uploadAssets.enabled -}}
+{{- $destDir := .Values.uploadAssets.s3Directory | default .Values.repoName }}
+{{- $sourcePath := .Values.uploadAssets.path | default (printf "/app/public/assets/%s" .Values.repoName) }}
+{{- $fullName := include "generic-publishing-platform-app.fullname" . }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullName }}-upload-assets
+  labels:
+    {{- include "generic-publishing-platform-app.labels" . | nindent 4 }}
+    app: {{ $fullName }}-upload-assets
+    app.kubernetes.io/name: {{ $fullName }}-upload-assets
+    app.kubernetes.io/component: upload-assets
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+spec:
+  activeDeadlineSeconds: 900
+  backoffLimit: 1
+  template:
+    metadata: 
+      name: {{ $fullName }}-upload-assets
+      labels:
+        {{- include "generic-publishing-platform-app.labels" . | nindent 8 }}
+        app: {{ $fullName }}-upload-assets
+        app.kubernetes.io/name: {{ $fullName }}-upload-assets
+        app.kubernetes.io/component: upload-assets
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 1001
+        runAsNonRoot: {{ .Values.securityContext.runAsNonRoot | default "true" }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.securityContext.runAsGroup }}
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: copy-assets-for-upload
+          image: "{{ .Values.appImage.repository }}:{{ required "Valid .Values.appImage.tag required!" .Values.appImage.tag }}"
+          imagePullPolicy: {{ .Values.appImage.pullPolicy | default "Always" }}
+          command:
+            - sh
+            - -c
+            - "cp -R {{ $sourcePath }}/* /assets-to-upload"
+          volumeMounts: &volumeMounts
+            - name: assets-to-upload
+              mountPath: /assets-to-upload
+          securityContext:
+            allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation | default "false" }}
+            readOnlyRootFilesystem: {{ .Values.securityContext.readOnlyRootFilesystem | default "true" }}
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        - name: upload-assets
+          image: {{ .Values.awsAccountId }}.dkr.ecr.{{ .Values.awsRegion }}.amazonaws.com/github/publishing-platform/toolbox:latest
+          command:
+            - aws
+            - s3
+            - sync
+            - /assets-to-upload
+            - "{{- printf "s3://publishing-platform-app-assets-%s/assets/%s/" .Values.publishingPlatformEnvironment $destDir }}"
+          {{- with .Values.jobResources }}
+          resources:
+            {{- . | toYaml | trim | nindent 12 }}
+          {{- end }}
+          volumeMounts: *volumeMounts
+          securityContext:
+            allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation | default "false" }}
+            readOnlyRootFilesystem: {{ .Values.securityContext.readOnlyRootFilesystem | default "true" }}
+            capabilities:
+              drop: ["ALL"]
+      restartPolicy: Never
+      volumes:
+        - name: assets-to-upload
+          emptyDir: {}
+      {{- if eq "arm64" .Values.arch }}
+      tolerations:
+        - key: arch
+          operator: Equal
+          value: {{ .Values.arch }}
+          effect: NoSchedule
+      nodeSelector:
+        kubernetes.io/arch: {{ .Values.arch }}
+      {{- end }}
+{{- end }}

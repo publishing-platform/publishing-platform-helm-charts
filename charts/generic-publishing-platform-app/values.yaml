@@ -89,6 +89,8 @@ extraEnv: {}
 #    value: "https://splines.{{ .Values.externalDomain }}"
 
 publishingPlatformEnvironment: test
+uploadAssets:
+  enabled: true
 
 metricsPort: 9394
 
