@@ -26,6 +26,10 @@ redis:
     app: ""
     workers: ""
 
+# dbMigrationEnabled controls whether Rails database migrations are run on install/upgrade.
+dbMigrationEnabled: false
+dbMigrationCommand: ["rails", "db:migrate"]    
+
 repoName: "example"  # Dummy value, overridden in ArgoCD config.
 # arch determines whether the app should schedule on amd64 or arm64 nodes.
 arch: amd64
