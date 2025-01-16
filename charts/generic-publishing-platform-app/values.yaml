@@ -11,6 +11,7 @@ ingress:
 # appEnabled determines whether the web app Deployment is created.
 appEnabled: true
 replicaCount: 2
+podDisruptionBudget: {}
 
 # redis.enabled controls whether a Redis database is set up for the app
 # REDIS_URL is automatically set unless redis.redisUrlOverride values are provided
@@ -38,7 +39,7 @@ redis:
 
 # dbMigrationEnabled controls whether Rails database migrations are run on install/upgrade.
 dbMigrationEnabled: false
-dbMigrationCommand: ["rails", "db:migrate"]    
+dbMigrationCommand: ["rails", "db:migrate"]
 
 repoName: "example"  # Dummy value, overridden in ArgoCD config.
 # arch determines whether the app should schedule on amd64 or arm64 nodes.

@@ -12,6 +12,8 @@ awsAccountId: "761018850167"
 replicaCount: 3
 workers:
   replicaCount: 3
+podDisruptionBudget: &pdb
+  maxUnavailable: 2
 
 _alb-ingress-defaults: &alb-ingress-defaults
   alb.ingress.kubernetes.io/scheme: internet-facing
