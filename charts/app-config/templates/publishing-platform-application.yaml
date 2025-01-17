@@ -1,67 +1,67 @@
-# {{ range .Values.publishingPlatformApplications }}
-# {{- $reponame := .repoName | default .name }}
-# {{- $imageTagConfig := $.Files.Get (printf "image-tags/%s/%s" $.Values.publishingPlatformEnvironment $reponame) | fromYaml }}
-# {{- $imageTag := $imageTagConfig.image_tag }}
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: {{ .name }}
-#   namespace: {{ $.Values.argoNamespace | default $.Release.Namespace }}
-#   finalizers:
-#     - resources-finalizer.argocd.argoproj.io
-#   annotations:
-#     repoName: "{{ $reponame }}"
-#     imageTag: "{{ $imageTag }}"
-#     notifications.argoproj.io/subscribe.on-deployed.argo_events: ""
-#     # notifications.argoproj.io/subscribe.deployment.grafana: "deployment|{{ .name }}" # TODO: uncomment once grafana is set up
-#     postSyncWorkflowEnabled: "{{ .postSyncWorkflowEnabled | default "true" }}"
-# spec:
-#   project: publishing-platform
-#   source:
-#     repoURL: git@github.com/publishing-platform/publishing-platform-helm-charts
-#     path: "{{ .chartPath | default "charts/generic-publishing-platform-app" }}"
-#     targetRevision: {{ .targetRevision | default "HEAD" }}
-#     helm:
-#       # Environment-specific Helm values. These take precedence over the app
-#       # chart's values.yaml.
-#       values: |
-#         {{- toYaml (omit $.Values "publishingPlatformApplications") | nindent 8 }}
-#         repoName: {{ $reponame }}
-#         {{- if .imageValues }}
-#         images:
-#         {{ range .imageValues }}
-#           {{- $imageTagConfig := $.Files.Get (printf "image-tags/%s/%s" $.Values.publishingPlatformEnvironment . ) | fromYaml }}
-#           {{- $imageTag := $imageTagConfig.image_tag }}
-#           {{ camelcase . }}:
-#             repository: {{ $.Values.awsAccountId }}.dkr.ecr.{{ $.Values.awsRegion }}.amazonaws.com/github/publishing-platform/{{ . }}
-#             tag: {{ $imageTag }}
-#         {{- end }}
-#         {{- else }}
-#         appImage:
-#           repository: {{ $.Values.awsAccountId }}.dkr.ecr.{{ $.Values.awsRegion }}.amazonaws.com/github/publishing-platform/{{ $reponame }}
-#           tag: {{ $imageTag }}
-#           pullPolicy: {{ .appImagePullPolicy | default "IfNotPresent" }}
-#         {{- end }}
-#         {{- with .helmValues }}
-#         {{- toYaml . | nindent 8 }}
-#         {{- end }}
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: {{ .namespace | default $.Values.appsNamespace }}
-#   syncPolicy:
-#     automated:
-#       prune: true
-#       selfHeal: true
-#     syncOptions:
-#     - CreateNamespace=true
-#     - PrunePropagationPolicy=foreground
-#     - PruneLast=true
-#     - ApplyOutOfSyncOnly=true
-#     managedNamespaceMetadata:
-#       labels:
-#         argocd.argoproj.io/managed-by: {{ $.Values.argoNamespace | default $.Release.Namespace }}
-#         pod-security.kubernetes.io/audit: "restricted"
-#         pod-security.kubernetes.io/enforce: "baseline"
-#         pod-security.kubernetes.io/warn: "restricted"
-# ---
-# {{ end }}
+{{ range .Values.publishingPlatformApplications }}
+{{- $reponame := .repoName | default .name }}
+{{- $imageTagConfig := $.Files.Get (printf "image-tags/%s/%s" $.Values.publishingPlatformEnvironment $reponame) | fromYaml }}
+{{- $imageTag := $imageTagConfig.image_tag }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.argoNamespace | default $.Release.Namespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    repoName: "{{ $reponame }}"
+    imageTag: "{{ $imageTag }}"
+    notifications.argoproj.io/subscribe.on-deployed.argo_events: ""
+    # notifications.argoproj.io/subscribe.deployment.grafana: "deployment|{{ .name }}" # TODO: uncomment once grafana is set up
+    postSyncWorkflowEnabled: "{{ .postSyncWorkflowEnabled | default "true" }}"
+spec:
+  project: publishing-platform
+  source:
+    repoURL: git@github.com/publishing-platform/publishing-platform-helm-charts
+    path: "{{ .chartPath | default "charts/generic-publishing-platform-app" }}"
+    targetRevision: {{ .targetRevision | default "HEAD" }}
+    helm:
+      # Environment-specific Helm values. These take precedence over the app
+      # chart's values.yaml.
+      values: |
+        {{- toYaml (omit $.Values "publishingPlatformApplications") | nindent 8 }}
+        repoName: {{ $reponame }}
+        {{- if .imageValues }}
+        images:
+        {{ range .imageValues }}
+          {{- $imageTagConfig := $.Files.Get (printf "image-tags/%s/%s" $.Values.publishingPlatformEnvironment . ) | fromYaml }}
+          {{- $imageTag := $imageTagConfig.image_tag }}
+          {{ camelcase . }}:
+            repository: {{ $.Values.awsAccountId }}.dkr.ecr.{{ $.Values.awsRegion }}.amazonaws.com/github/publishing-platform/{{ . }}
+            tag: {{ $imageTag }}
+        {{- end }}
+        {{- else }}
+        appImage:
+          repository: {{ $.Values.awsAccountId }}.dkr.ecr.{{ $.Values.awsRegion }}.amazonaws.com/github/publishing-platform/{{ $reponame }}
+          tag: {{ $imageTag }}
+          pullPolicy: {{ .appImagePullPolicy | default "IfNotPresent" }}
+        {{- end }}
+        {{- with .helmValues }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .namespace | default $.Values.appsNamespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+    - ApplyOutOfSyncOnly=true
+    managedNamespaceMetadata:
+      labels:
+        argocd.argoproj.io/managed-by: {{ $.Values.argoNamespace | default $.Release.Namespace }}
+        pod-security.kubernetes.io/audit: "restricted"
+        pod-security.kubernetes.io/enforce: "baseline"
+        pod-security.kubernetes.io/warn: "restricted"
+---
+{{ end }}
