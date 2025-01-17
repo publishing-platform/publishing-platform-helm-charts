@@ -26,4 +26,4 @@ monitoring:
   authorisation:
     githubOrganisation: publishing-platform
     readOnlyGithubTeam: publishing-platform
-    readWriteGithubTeam: publishing-platform-production-admin
+    readWriteGithubTeam: publishing-platform-production-deploy
