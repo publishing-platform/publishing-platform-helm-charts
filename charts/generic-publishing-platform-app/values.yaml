@@ -41,6 +41,8 @@ redis:
 dbMigrationEnabled: false
 dbMigrationCommand: ["rails", "db:prepare"]
 
+cronTasks: []
+
 repoName: "example"  # Dummy value, overridden in ArgoCD config.
 # arch determines whether the app should schedule on amd64 or arm64 nodes.
 arch: amd64
