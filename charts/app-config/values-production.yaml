@@ -133,3 +133,19 @@ publishingPlatformApplications:
             secretKeyRef:
               name: signon
               key: DEVISE_SECRET_KEY
+        - name: SMTP_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: signon
+              key: SMTP_ENDPOINT
+        - name: SMTP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: signon
+              key: SMTP_USERNAME
+        - name: SMTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: signon
+              key: SMTP_PASSWORD
+
