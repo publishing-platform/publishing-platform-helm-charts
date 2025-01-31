@@ -138,6 +138,11 @@ publishingPlatformApplications:
             secretKeyRef:
               name: signon
               key: SMTP_ENDPOINT
+        - name: SMTP_PORT
+          valueFrom:
+            secretKeyRef:
+              name: signon
+              key: SMTP_PORT              
         - name: SMTP_USERNAME
           valueFrom:
             secretKeyRef:
