@@ -148,4 +148,3 @@ publishingPlatformApplications:
             secretKeyRef:
               name: signon
               key: SMTP_PASSWORD
-
