@@ -1,0 +1,28 @@
+{{ if .Values.redis.enabled }}
+{{- $fullName := include "generic-publishing-platform-app.fullname" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullName }}-redis-conf
+  labels:
+    {{- include "generic-publishing-platform-app.labels" . | nindent 4 }}
+    app: {{ $fullName }}
+    app.kubernetes.io/name: {{ $fullName }}
+    app.kubernetes.io/component: redis
+data:
+  redis.conf: |-
+    bind *
+    port 6379
+
+    protected-mode no
+
+    daemonize no
+
+    maxmemory-policy noeviction
+    maxmemory {{ .Values.redis.config.maxmemory }}
+
+    # Use AOF for persistence
+    dir /data
+    appendonly yes
+    save ""
+{{ end }}
