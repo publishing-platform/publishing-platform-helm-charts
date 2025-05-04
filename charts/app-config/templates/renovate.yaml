@@ -1,0 +1,23 @@
+{{ if eq .Values.publishingPlatformEnvironment "production" }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: renovate
+  namespace: {{ .Values.argoNamespace | default .Release.Namespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: publishing-platform
+  source:
+    repoURL: git@github.com/publishing-platform/publishing-platform-helm-charts
+    path: charts/renovate
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.argoNamespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ApplyOutOfSyncOnly=true
+{{ end }}
