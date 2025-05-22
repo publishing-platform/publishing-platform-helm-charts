@@ -60,13 +60,50 @@ publishingPlatformApplications:
     chartPath: charts/external-secrets
     postSyncWorkflowEnabled: "false"
 
-  - name: signon
+  - name: publishing-api
     helmValues:
       dbMigrationEnabled: true
+      uploadAssets:
+        enabled: false
       workers:
         enabled: true
       redis:
         enabled: true
+      extraEnv:
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_ID
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-publishing-api
+              key: oauth_id
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-publishing-api
+              key: oauth_secret
+        - name: CONTENT_STORE_BEARER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: signon-token-publishing-api-content-store
+              key: bearer_token
+        - name: DRAFT_CONTENT_STORE_BEARER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: signon-token-publishing-api-draft-content-store
+              key: bearer_token
+        - name: RABBITMQ_URL
+          valueFrom:
+            secretKeyRef:
+              name: publishing-api
+              key: RABBITMQ_URL
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: publishing-api
+              key: DATABASE_URL                     
+
+  - name: signon
+    helmValues:
+      dbMigrationEnabled: true
       ingress:
         enabled: true
         annotations:

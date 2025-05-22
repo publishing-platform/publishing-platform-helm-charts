@@ -1,0 +1,1 @@
+amqps://{{ .amqpUsername | toString }}:{{ .amqpPassword | toString }}@{{ .amqpHost | toString }}:{{ .amqpPort | toString }}/publishing

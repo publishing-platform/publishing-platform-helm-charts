@@ -13,6 +13,14 @@ appEnabled: true
 replicaCount: 2
 podDisruptionBudget: {}
 
+# workers.enabled should be true if the app uses Sidekiq, false otherwise.
+workers:
+  enabled: false
+  replicaCount: 2
+  types:
+    - name: worker
+      command: ["sidekiq", "-C", "config/sidekiq.yml"]
+
 # redis.enabled controls whether a Redis database is set up for the app
 # REDIS_URL is automatically set unless redis.redisUrlOverride values are provided
 redis:
@@ -41,7 +49,21 @@ redis:
 dbMigrationEnabled: false
 dbMigrationCommand: ["rails", "db:prepare"]
 
+# cronTasks is a list of {name, command, schedule} and/or {name, task,
+# schedule}, which represent CronJobs to run either an arbitrary command or a
+# Rake task. An optional `suspend` field is passed through to the CronJob spec
+# if present.
 cronTasks: []
+#  - name: mail-fetcher
+#    command: "script/mail_fetcher"
+#    schedule: "*/15 * * * *"
+#  - name: reports-generate
+#    task: "reports:generate"  # Rake task.
+#    schedule: "3 * * * *"
+
+# extraVolumes defines Volumes on the app Pods (in both deployment.yaml and
+# worker-deployment.yaml).
+extraVolumes: []
 
 repoName: "example"  # Dummy value, overridden in ArgoCD config.
 # arch determines whether the app should schedule on amd64 or arm64 nodes.
@@ -83,6 +105,14 @@ appResources:
   requests:
     cpu: 500m
     memory: 800Mi
+
+workerResources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi    
 
 nginxResources:
   limits:
