@@ -99,7 +99,7 @@ publishingPlatformApplications:
           valueFrom:
             secretKeyRef:
               name: publishing-api
-              key: DATABASE_URL                     
+              key: DATABASE_URL
 
   - name: signon
     helmValues:
