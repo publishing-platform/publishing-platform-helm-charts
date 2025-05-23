@@ -174,6 +174,58 @@ publishingPlatformApplications:
               name: publishing-api
               key: DATABASE_URL
 
+  - name: router-api
+    helmValues: &router-api
+      dbMigrationEnabled: true
+      uploadAssets:
+        enabled: false
+      extraEnv:
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_ID
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-router-api
+              key: oauth_id
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-router-api
+              key: oauth_secret
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: router-api
+              key: DATABASE_URL
+
+  - name: draft-router-api
+    repoName: router-api
+    helmValues:
+      <<: *router-api
+      rails:
+        createKeyBaseSecret: false
+        # use the same secret as the live router-api, it will reduce toil
+        secretKeyBaseName: router-api-rails-secret-key-base
+      sentry:
+        createSecret: false  # Sentry DSNs are per repo.
+        dsnSecretName: router-api-sentry
+      extraEnv:
+        - name: SENTRY_ENVIRONMENT
+          value: "draft-production"
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_ID
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-draft-router-api
+              key: oauth_id
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-draft-router-api
+              key: oauth_secret
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: draft-router-api
+              key: DATABASE_URL
+
   - name: signon
     helmValues:
       dbMigrationEnabled: true
