@@ -133,6 +133,43 @@ publishingPlatformApplications:
     chartPath: charts/external-secrets
     postSyncWorkflowEnabled: "false"
 
+  - name: publisher
+    helmValues:
+      dbMigrationEnabled: true
+      nginxClientMaxBodySize: &max-upload-size 500M
+      ingress:
+        enabled: true
+        annotations:
+          <<: [*alb-ingress-group-backend, *alb-ingress-defaults]
+          alb.ingress.kubernetes.io/group.order: "70"
+          alb.ingress.kubernetes.io/conditions.{{ .Release.Name }}: >
+            [{"field": "host-header", "hostHeaderConfig": { "values": [
+                "publisher.{{ .Values.publishingDomainSuffix }}"
+            ]}}]
+        hosts:
+          - name: publisher.{{ .Values.k8sExternalDomainSuffix }}
+      extraEnv:
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_ID
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-publisher
+              key: oauth_id
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-publisher
+              key: oauth_secret
+        - name: PUBLISHING_API_BEARER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: signon-token-publisher-publishing-api
+              key: bearer_token
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: publisher
+              key: DATABASE_URL
+
   - name: publishing-api
     helmValues:
       dbMigrationEnabled: true
