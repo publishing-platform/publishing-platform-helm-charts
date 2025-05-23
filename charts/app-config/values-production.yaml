@@ -56,6 +56,79 @@ publishingPlatformApplications:
       nextEnvironment: ""
       enableWebhookIngress: true
 
+  - name: content-store
+    helmValues: &content-store
+      dbMigrationEnabled: true
+      nginxClientMaxBodySize: 20M
+      uploadAssets:
+        enabled: false
+      extraEnv:
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_ID
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-content-store
+              key: oauth_id
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-content-store
+              key: oauth_secret
+        - name: ROUTER_API_BEARER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: signon-token-content-store-router-api
+              key: bearer_token
+        - name: DEFAULT_TTL
+          value: "300"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: content-store
+              key: DATABASE_URL
+        - name: WEB_CONCURRENCY
+          value: '2'
+
+  - name: draft-content-store
+    repoName: content-store
+    helmValues:
+      <<: *content-store
+      rails:
+        createKeyBaseSecret: false
+        # use the same secret as the live content-store, it will reduce toil
+        secretKeyBaseName: content-store-rails-secret-key-base
+      sentry:
+        createSecret: false  # Sentry DSNs are per repo.
+        dsnSecretName: content-store-sentry
+      extraEnv:
+        - name: SENTRY_ENVIRONMENT
+          value: "draft-production"
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_ID
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-draft-content-store
+              key: oauth_id
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-draft-content-store
+              key: oauth_secret
+        - name: ROUTER_API_BEARER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: signon-token-draft-content-store-draft-router-api
+              key: bearer_token
+        - name: DEFAULT_TTL
+          value: "1"
+        - name: PUBLISHING_PLATFORM_LOCATION_HOSTNAME_PREFIX
+          value: draft-
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: draft-content-store
+              key: DATABASE_URL
+        - name: WEB_CONCURRENCY
+          value: '2'
+
   - name: external-secrets
     chartPath: charts/external-secrets
     postSyncWorkflowEnabled: "false"
