@@ -9,11 +9,16 @@ assetsDomain: assets.production.publishing.service.publishing-platform.co.uk
 
 awsAccountId: "761018850167"
 
-replicaCount: 3
+# replicaCount: 3
+# workers:
+#   replicaCount: 3
+# podDisruptionBudget: &pdb
+#   maxUnavailable: 2
+replicaCount: 2
 workers:
-  replicaCount: 3
+  replicaCount: 2
 podDisruptionBudget: &pdb
-  maxUnavailable: 2
+  maxUnavailable: 1
 appResources:
   limits:
     cpu: 500m
