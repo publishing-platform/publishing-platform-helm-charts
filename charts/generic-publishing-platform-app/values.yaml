@@ -98,52 +98,29 @@ nginxDenyCrawlers: false
 proxyRailsAssetsToS3: true
 serveRailsAssetsFromFilesystem: false
 
-# appResources:
-#   limits:
-#     cpu: 1
-#     memory: 1500Mi
-#   requests:
-#     cpu: 500m
-#     memory: 800Mi
-
-# workerResources:
-#   limits:
-#     cpu: 1
-#     memory: 1Gi
-#   requests:
-#     cpu: 500m
-#     memory: 512Mi
-
-# nginxResources:
-#   limits:
-#     cpu: 1
-#     memory: 1Gi
-#   requests:
-#     cpu: 50m
-#     memory: 512Mi
 appResources:
   limits:
-    cpu: 500m
-    memory: 500Mi
+    cpu: 1
+    memory: 1500Mi
   requests:
-    cpu: 100m
-    memory: 200Mi
+    cpu: 500m
+    memory: 800Mi
 
 workerResources:
   limits:
-    cpu: 500m
-    memory: 500Mi
+    cpu: 1
+    memory: 1Gi
   requests:
-    cpu: 100m
-    memory: 200Mi
+    cpu: 500m
+    memory: 512Mi
 
 nginxResources:
   limits:
-    cpu: 500m
-    memory: 500Mi
+    cpu: 1
+    memory: 1Gi
   requests:
     cpu: 50m
-    memory: 100Mi
+    memory: 512Mi
 
 # dnsConfig is passed directly into the pod specs in the app and worker
 # deployment templates.
