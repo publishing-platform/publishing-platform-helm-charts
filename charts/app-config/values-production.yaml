@@ -284,6 +284,8 @@ publishingPlatformApplications:
             secretKeyRef:
               name: publishing-api
               key: DATABASE_URL
+        - name: PUBLISHING_PLATFORM_CONTENT_SCHEMAS_PATH
+          value: /app/content_schemas
 
   - name: router-api
     helmValues: &router-api
