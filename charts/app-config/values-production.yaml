@@ -170,6 +170,23 @@ publishingPlatformApplications:
     chartPath: charts/external-secrets
     postSyncWorkflowEnabled: "false"
 
+  - name: frontend
+    helmValues:
+      uploadFrontendErrorPagesEnabled: true
+
+  - name: draft-frontend
+    repoName: frontend
+    helmValues:
+      rails:
+        createKeyBaseSecret: false
+      sentry:
+        createSecret: false
+      uploadAssets:
+        enabled: false
+      extraEnv:
+        - name: PUBLISHING_PLATFORM_LOCATION_HOSTNAME_PREFIX
+          value: draft-
+
   - name: organisations-publisher
     helmValues:
       dbMigrationEnabled: true
