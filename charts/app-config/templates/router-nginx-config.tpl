@@ -182,7 +182,7 @@ http {
 
     error_page {{ . }} /{{ . }}.html;
     location /{{ . }}.html {
-      proxy_pass https://publishing-platform-app-assets-{{ .Values.publishingPlatformEnvironment }}.s3.eu-west-2.amazonaws.com/error_pages/{{ . }}.html;
+      proxy_pass https://publishing-platform-app-assets-{{ $.Values.publishingPlatformEnvironment }}.s3.eu-west-2.amazonaws.com/error_pages/{{ . }}.html;
       internal;
       proxy_set_header   Authorization "";
       proxy_set_header   Connection "";
