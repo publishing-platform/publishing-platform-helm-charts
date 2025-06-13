@@ -93,6 +93,45 @@ publishingPlatformApplications:
       nextEnvironment: ""
       enableWebhookIngress: true
 
+  - name: authenticating-proxy
+    helmValues:
+      uploadAssets:
+        enabled: false
+      ingress:
+        enabled: true
+        annotations:
+          <<: [*alb-ingress-group-backend, *alb-ingress-defaults]
+          alb.ingress.kubernetes.io/group.order: "20"
+          alb.ingress.kubernetes.io/conditions.{{ .Release.Name }}: >
+            [{"field": "host-header", "hostHeaderConfig": { "values": [
+                "draft-origin.{{ .Values.publishingDomainSuffix }}"
+            ]}}]
+        hosts:
+          - name: draft-origin.{{ .Values.k8sExternalDomainSuffix }}
+      extraEnv:
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_ID
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-authenticating-proxy
+              key: oauth_id
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-authenticating-proxy
+              key: oauth_secret
+        - name: PUBLISHING_PLATFORM_UPSTREAM_URI
+          value: "http://draft-router"
+        - name: JWT_AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authenticating-proxy
+              key: JWT_AUTH_SECRET
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: authenticating-proxy
+              key: DATABASE_URL
+
   - name: content-store
     helmValues: &content-store
       dbMigrationEnabled: true
@@ -271,6 +310,11 @@ publishingPlatformApplications:
             secretKeyRef:
               name: signon-token-publisher-publishing-api
               key: bearer_token
+        - name: JWT_AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authenticating-proxy
+              key: JWT_AUTH_SECRET
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
