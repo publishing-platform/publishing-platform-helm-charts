@@ -287,6 +287,101 @@ publishingPlatformApplications:
         - name: PUBLISHING_PLATFORM_CONTENT_SCHEMAS_PATH
           value: /app/content_schemas
 
+  - name: router
+    helmValues:
+      rails:
+        enabled: false
+      uploadAssets:
+        enabled: false
+      ingress:
+        enabled: true
+        annotations:
+          <<: [*alb-ingress-defaults, *alb-ingress-waf-ruleset-www]
+          # TODO - uncomment below https://github.com/publishing-platform/publishing-platform-helm-charts/issues/7
+          # alb.ingress.kubernetes.io/security-groups: eks_ingress_www_origin
+          alb.ingress.kubernetes.io/load-balancer-name: www-origin
+          alb.ingress.kubernetes.io/load-balancer-attributes: >
+            access_logs.s3.enabled=true,
+            access_logs.s3.bucket=publishing-platform-{{ .Values.publishingPlatformEnvironment }}-aws-logging,
+            access_logs.s3.prefix=elb/www-origin
+          alb.ingress.kubernetes.io/conditions.{{ .Release.Name }}: >
+            [{"field": "host-header", "hostHeaderConfig": { "values": [
+                "www.{{ .Values.externalDomainSuffix }}",
+                "www-origin.{{ .Values.publishingDomainSuffix }}"
+            ]}}]
+        hosts:
+          - name: www-origin.{{ .Values.k8sExternalDomainSuffix }}
+      nginxConfigMap:
+        create: false
+        name: live-router-nginx-conf
+      nginxExtraVolumeMounts:
+        - name: live-router-nginx-conf
+          mountPath: /usr/share/nginx/html/robots.txt
+          subPath: robots.txt
+      appProbes: &router-app-probes
+        startupProbe: &router-probe
+          httpGet:
+            path: /healthcheck
+            port: 9394
+          failureThreshold: 10
+          periodSeconds: 1
+          timeoutSeconds: 1
+        livenessProbe:
+          <<: *router-probe
+          failureThreshold: 3
+          periodSeconds: 5
+        readinessProbe:
+          <<: *router-probe
+          httpGet:
+            path: /healthcheck
+            port: 9394
+          failureThreshold: 2
+          periodSeconds: 5
+      extraEnv:
+        - name: GOMAXPROCS
+          value: "4"  # Keep this similar to the CPU limit (in whole cores).
+        - name: SENTRY_ENVIRONMENT
+          value: "production"
+        - name: ROUTER_PUBADDR
+          value: ":3000"
+        - name: ROUTER_APIADDR
+          value: ":9394"
+        # - name: ROUTER_ROUTE_RELOAD_INTERVAL
+        #   value: 5m
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: router-api
+              name: DATABASE_URL
+
+  - name: draft-router
+    repoName: router
+    helmValues:
+      rails:
+        enabled: false
+      sentry:
+        createSecret: false  # Sentry DSNs are per repo.
+      uploadAssets:
+        enabled: false
+      nginxConfigMap:
+        create: false
+        name: draft-router-nginx-conf
+      appProbes: *router-app-probes
+      extraEnv:
+        - name: GOMAXPROCS
+          value: "4"  # Keep this similar to the CPU limit (in whole cores).
+        - name: ROUTER_PUBADDR
+          value: ":3000"
+        - name: ROUTER_APIADDR
+          value: ":9394"
+        # - name: ROUTER_ROUTE_RELOAD_INTERVAL
+        #   value: 5m
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: draft-router-api
+              name: DATABASE_URL
+
   - name: router-api
     helmValues: &router-api
       dbMigrationEnabled: true
