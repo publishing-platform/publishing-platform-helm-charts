@@ -95,6 +95,7 @@ publishingPlatformApplications:
 
   - name: authenticating-proxy
     helmValues:
+      dbMigrationEnabled: true
       uploadAssets:
         enabled: false
       ingress:
