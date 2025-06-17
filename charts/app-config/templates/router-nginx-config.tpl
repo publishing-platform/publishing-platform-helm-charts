@@ -161,9 +161,9 @@ http {
       return 200 'google-site-verification: googlexxxxxxxxxxxxxxxx.html';
     }
 
-    location = /googlexxxxxxxxxxxxxxxx.html {
+    location = /googlezzzzzzzzzzzzzzzz.html {
       add_header Content-Type text/html;
-      return 200 'google-site-verification: googlexxxxxxxxxxxxxxxx.html';
+      return 200 'google-site-verification: googlezzzzzzzzzzzzzzzz.html';
     }
 
     # Bing verification files
