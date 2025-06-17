@@ -434,8 +434,8 @@ publishingPlatformApplications:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              key: router-api
-              name: DATABASE_URL
+              name: router-api
+              key: DATABASE_URL
 
   - name: draft-router
     repoName: router
@@ -468,8 +468,8 @@ publishingPlatformApplications:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              key: draft-router-api
-              name: DATABASE_URL
+              name: draft-router-api
+              key: DATABASE_URL
 
   - name: router-api
     helmValues: &router-api
