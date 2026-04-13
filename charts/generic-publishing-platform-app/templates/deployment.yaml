@@ -158,8 +158,8 @@ spec:
           ports:
             - name: http
               containerPort: {{ .Values.nginxPort }}
-          livenessProbe: &nginx-probe
-            httpGet:
+          livenessProbe:
+            httpGet: &nginx-probe
               path: /readyz
               port: http
             initialDelaySeconds: 2
@@ -167,7 +167,7 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 20
           readinessProbe:
-            <<: *nginx-probe  # Intentionally same path as liveness.
+            httpGet: *nginx-probe  # Intentionally same path as liveness.
             failureThreshold: 2
             timeoutSeconds: 15
           {{- with .Values.nginxResources }}
