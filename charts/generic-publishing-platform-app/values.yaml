@@ -159,3 +159,8 @@ rails:
 externalSecrets:
   deletionPolicy: Delete
   refreshInterval: 1h  # Be kind to etcd and don't set this too short.
+
+kubernetesProbeEndpoints:
+  livenessProbe: "/healthcheck/live"
+  readinessProbe: "/healthcheck/live" # Intentionally same path as liveness.
+  startupProbe: "/healthcheck/live" # Intentionally same path as liveness.
