@@ -1,5 +1,10 @@
 name: linting
 on: [push]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.repository }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   chart-testing:
     runs-on: ubuntu-latest
