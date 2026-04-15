@@ -162,5 +162,5 @@ externalSecrets:
 
 kubernetesProbeEndpoints:
   livenessProbe: "/healthcheck/live"
-  readinessProbe: "/healthcheck/live" # Intentionally same path as liveness.
-  startupProbe: "/healthcheck/live" # Intentionally same path as liveness.
+  readinessProbe: "/healthcheck/live"  # Intentionally same path as liveness.
+  startupProbe: "/healthcheck/live"  # Intentionally same path as liveness.
