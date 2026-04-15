@@ -135,7 +135,7 @@ publishingPlatformApplications:
               key: DATABASE_URL
 
   - name: content-publisher
-    helmValues:      
+    helmValues:
       dbMigrationEnabled: true
       nginxClientMaxBodySize: &max-upload-size 500M
       workers:
@@ -155,7 +155,7 @@ publishingPlatformApplications:
           - name: content-publisher.{{ .Values.k8sExternalDomainSuffix }}
       extraEnv:
         - name: INSTANCE_NAME
-          value: production      
+          value: production
         - name: ASSET_MANAGER_BEARER_TOKEN
           valueFrom:
             secretKeyRef:
