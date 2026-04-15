@@ -1,0 +1,5 @@
+apiVersion: v2
+name: publishing-platform-e2e-tests
+description: A Helm chart for Publishing Platform E2E Tests
+type: application
+version: 0.1.0

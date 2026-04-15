@@ -1,0 +1,82 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: publishing-platform-e2e-tests
+spec:
+  entrypoint: publishing-platform-e2e-tests
+  arguments:
+    parameters:
+      - name: grep
+  workflowMetadata:
+    labels:
+      {{- include "publishing-platform-e2e-tests.labels" . | nindent 6 }}
+  templates:
+    - name: publishing-platform-e2e-tests
+      podSpecPatch: '{"containers":[{"name":"main","resources":{"limits":{"cpu":2,"memory":"2Gi"},"requests":{"cpu":1,"memory":"1Gi"}}}]}'
+      inputs:
+        parameters:
+          - name: grep
+      retryStrategy:
+        limit: 2
+        backoff:
+          duration: "15s"
+          factor: 2
+          maxDuration: "16m"
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: app-tmp
+          emptyDir: {}
+      container:
+        image: "{{ .Values.awsAccountId }}.dkr.ecr.{{ .Values.awsRegion }}.amazonaws.com/github/publishing-platform/publishing-platform-e2e-tests:latest"
+        command:
+          - yarn
+        args:
+          - --global-folder=/tmp/global
+          - playwright
+          - test
+          - --pass-with-no-tests
+          - --reporter=list
+          - --workers=4
+          - --project=main
+          - --grep-invert=@not-{{ .Values.publishingPlatformEnvironment }}
+          - "--grep={{ `{{ inputs.parameters.grep }}` }}"
+        volumeMounts:
+          - name: tmp
+            mountPath: /tmp
+          - name: app-tmp
+            mountPath: /app/tmp
+        env:
+          - name: YARN_CACHE_FOLDER
+            value: /tmp/.cache/yarn
+          - name: YARN_GLOBAL_FOLDER
+            value: /tmp/.cache/yarn
+          - name: PREFIX
+            value: /tmp/.cache/yarn
+          - name: PUBLIC_DOMAIN
+            value: www.{{ $.Values.externalDomainSuffix }}
+          - name: PUBLISHING_DOMAIN
+            value: {{ $.Values.publishingDomainSuffix }}
+          - name: SIGNON_EMAIL
+            valueFrom:
+              secretKeyRef:
+                name: test-signon-account
+                key: email
+          - name: SIGNON_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: test-signon-account
+                key: password
+        {{- with .Values.appResources }}
+        resources:
+          {{- . | toYaml | trim | nindent 10 }}
+        {{- end }}
+      {{- if eq "arm64" .Values.arch }}
+      tolerations:
+        - key: arch
+          operator: Equal
+          value: {{ .Values.arch }}
+          effect: NoSchedule
+      nodeSelector:
+        kubernetes.io/arch: {{ .Values.arch }}
+      {{- end }}

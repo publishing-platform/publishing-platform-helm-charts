@@ -8,6 +8,7 @@ publishingDomainSuffix: production.publishing.service.publishing-platform.co.uk
 assetsDomain: assets.production.publishing.service.publishing-platform.co.uk
 
 awsAccountId: "761018850167"
+awsRegion: "eu-west-2"
 
 # replicaCount: 3
 # workers:
@@ -364,6 +365,15 @@ publishingPlatformApplications:
               key: DATABASE_URL
         - name: PUBLISHING_PLATFORM_CONTENT_SCHEMAS_PATH
           value: /app/content_schemas
+
+  - name: publishing-platform-e2e-tests
+    chartPath: charts/publishing-platform-e2e-tests
+    helmValues:
+      cronTasks:
+        - name: publishing-platform-e2e-tests
+          schedule: "*/10 7-19 * * 1-5" # every 10 minutes, between 7:00 - 19:00 UTC, Monday to Friday
+          project: main
+          suspend: true
 
   - name: router
     helmValues:
