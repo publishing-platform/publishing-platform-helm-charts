@@ -28,6 +28,14 @@ spec:
       podSpecPatch: '{"containers":[{"name":"main","resources":{"limits":{"cpu":2,"memory":"2Gi"},"requests":{"cpu":1,"memory":"1Gi"}}}]}'
       dag:
         tasks:
+          - name: publishing-platform-e2e-tests
+            templateRef:
+              name: publishing-platform-e2e-tests
+              template: publishing-platform-e2e-tests
+            arguments:
+              parameters:
+                - name: grep
+                  value: "{{"@app-{{workflow.parameters.application}}"}}"
     {{ if .Values.nextEnvironment }}
           - name: check-for-promotion
             when: "{{"'{{workflow.parameters.application}}' !~ '^draft-'"}}"
