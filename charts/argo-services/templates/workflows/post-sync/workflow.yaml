@@ -3,6 +3,16 @@ kind: WorkflowTemplate
 metadata:
   name: post-sync
 spec:
+  workflowMetadata:
+    annotations:
+      workflows.argoproj.io/title: "**post-sync-{{ "{{workflow.parameters.application}}" }}-{{ "{{workflow.parameters.imageTag}}" }}**"
+      workflows.argoproj.io/description: "`promote: {{ "{{workflow.parameters.promoteDeployment}}" }} auto_deploy: {{ "{{workflow.parameters.automaticDeploysEnabled}}" }}`"
+    labels:
+      repoName: "{{ `{{workflow.parameters.repoName}}` }}"
+      application: "{{ `{{workflow.parameters.application}}` }}"
+      imageTag: "{{ `{{workflow.parameters.imageTag}}` }}"
+      promoteDeployment: "{{ `{{workflow.parameters.promoteDeployment}}` }}"
+      automaticDeploysEnabled: "{{ `{{workflow.parameters.automaticDeploysEnabled}}` }}"
   entrypoint: handle-sync-event
   onExit: exit-handler
   retryStrategy:
@@ -17,6 +27,8 @@ spec:
       - name: application
       - name: repoName
       - name: imageTag
+      - name: promoteDeployment
+      - name: automaticDeploysEnabled      
   podSpecPatch: |
     containers:
       - name: main
@@ -37,18 +49,9 @@ spec:
                 - name: grep
                   value: "{{"@app-{{workflow.parameters.application}}"}}"
     {{ if .Values.nextEnvironment }}
-          - name: check-for-promotion
-            when: "{{"'{{workflow.parameters.application}}' !~ '^draft-'"}}"
-            template: check-for-promotion
-            arguments:
-              parameters:
-                - name: environment
-                  value: "{{ .Values.publishingPlatformEnvironment }}"
-                - name: repoName
-                  value: "{{"{{workflow.parameters.repoName}}"}}"
           - name: promote-release
-            depends: check-for-promotion.Succeeded
-            when: "{{"'{{tasks.check-for-promotion.outputs.result}}' == 'true'"}}"
+            depends: publishing-platform-e2e-tests.Succeeded
+            when: "{{"'{{workflow.parameters.application}}' !~ '^draft-' && '{{workflow.parameters.promoteDeployment}}' == 'true' && '{{workflow.parameters.automaticDeploysEnabled}}' == 'true'"}}"
             template: send-webhook
             arguments:
               parameters:
@@ -60,27 +63,8 @@ spec:
                   value: "{{"{{workflow.parameters.imageTag}}"}}"
                 - name: promoteDeployment
                   value: "true"
-
-    - name: check-for-promotion
-      inputs:
-        parameters:
-        - name: environment
-        - name: repoName
-      script:
-        image: {{ $.Values.awsAccountId }}.dkr.ecr.{{ $.Values.awsRegion }}.amazonaws.com/github/publishing-platform/toolbox:latest
-        command: [/bin/bash]
-        env:
-          - name: ENVIRONMENT
-            value: "{{"{{inputs.parameters.environment}}"}}"
-          - name: REPO_NAME
-            value: "{{"{{inputs.parameters.repoName}}"}}"
-          - name: GITHUB_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: publishing-platform-ci-github-creds
-                key: token
-        source: |
-          {{- .Files.Get "scripts/check-for-promotion.sh" | nindent 14 }}
+                - name: application
+                  value: "{{"{{workflow.parameters.application}}"}}"
     - name: send-webhook
       inputs:
         parameters:
@@ -88,6 +72,7 @@ spec:
         - name: repoName
         - name: imageTag
         - name: promoteDeployment
+        - name: application
       script:
         image: curlimages/curl
         command:
@@ -132,7 +117,7 @@ spec:
         source: >
           #!/usr/bin/env bash
 
-          echo {{"{{workflow.failures}}"}} | jq -r 'group_by(.templateName) | map({templateName: .[0].templateName, errorMessages: [.[].message | select(length > 0)] | unique}) | map("- \(.templateName): " + (["\(.errorMessages[])"] | join(",")) ) | .[]' > /tmp/message.txt
+          echo {{"{{workflow.failures}}"}} | jq -r 'group_by(.templateName) | map({templateName: .[0].templateName, errorMessages: [.[].message | select(length > 0)] | unique}) | map("🔴 *" + .templateName + "* failed\n   └ " + ([.errorMessages[] | (if test("timeout|timed out"; "i") then "⏰ " + . elif test("connection refused|network|dns"; "i") then "🌐 " + . elif test("permission denied|forbidden|unauthorized"; "i") then "🔐 " + . elif test("not found|404"; "i") then "❓ " + . elif test("database|sql|migration"; "i") then "🗄️ " + . elif test("exit code [1-9]"; "i") then "❌ " + . else . end)] | join("\n   └ "))) | join("\n\n")' > /tmp/message.txt
       volumes:
         - name: tmp
           emptyDir: {}
@@ -153,23 +138,32 @@ spec:
                   # send to team slack channel.
                   value: "publishing-platform-deploy-alerts"
                 - name: text
-                  value: "Post-deploy workflow for {{"{{workflow.parameters.application}}"}} in {{ .Values.publishingPlatformEnvironment }} has {{"{{= sprig.lower(workflow.status) }}"}}. \n\n {{"{{ steps.parse-failures.outputs.parameters.message }}"}}"
+                  value: "Service: {{"{{workflow.parameters.application}}"}}\nEnvironment: {{ .Values.publishingPlatformEnvironment }}\nStage: Post-deploy\n\nImage: {{"{{workflow.parameters.imageTag}}"}}\nRepo: https://github.com/publishing-platform/{{"{{workflow.parameters.repoName}}"}}\nHelm chart: https://github.com/publishing-platform/publishing-platform-helm-charts/blob/main/charts/app-config/image-tags/{{ .Values.publishingPlatformEnvironment }}/{{"{{workflow.parameters.application}}"}}"
                 - name: blocks
                   value: |
-                    [{
-                      "type": "section",
-                      "text": {
-                          "type": "mrkdwn",
-                          "text": "Post-deploy workflow for {{"{{workflow.parameters.application}}"}} in {{ .Values.publishingPlatformEnvironment }} has {{"{{= sprig.lower(workflow.status) }}"}}. \n\n {{"{{ steps.parse-failures.outputs.parameters.message }}"}}"
-                      },
-                      "accessory": {
-                        "type": "button",
+                    [
+                      {
+                        "type": "section",
                         "text": {
+                          "type": "mrkdwn",
+                          "text": "🚀💥 Deployment failed"
+                        }
+                      },
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": "*Service:* {{"{{workflow.parameters.application}}"}}\n*Environment:* {{ .Values.publishingPlatformEnvironment }}\n*Stage:* Post-deploy\n\n*Image:* {{"{{workflow.parameters.imageTag}}"}}\n*Repo:* <https://github.com/publishing-platform/{{"{{workflow.parameters.repoName}}"}}|{{"{{workflow.parameters.repoName}}"}}>\n*Helm chart:* <https://github.com/publishing-platform/publishing-platform-helm-charts/blob/main/charts/app-config/image-tags/{{ .Values.publishingPlatformEnvironment }}/{{"{{workflow.parameters.application}}"}}|Chart values>"
+                        },
+                        "accessory": {
+                          "type": "button",
+                          "text": {
                             "type": "plain_text",
                             "text": "View workflow",
                             "emoji": true
-                        },
-                        "url": "https://argo-workflows.{{ .Values.k8sExternalDomainSuffix }}/workflows/apps/{{"{{ workflow.name }}"}}",
-                        "action_id": "view-workflow"
+                          },
+                          "url": "https://argo-workflows.{{ .Values.k8sExternalDomainSuffix }}/workflows/apps/{{"{{ workflow.name }}"}}",
+                          "action_id": "view-workflow"
+                        }
                       }
-                    }]
+                    ]
