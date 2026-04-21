@@ -72,6 +72,26 @@ service:
       port: 80
     https:
       port: 443
+podSecurityContext:
+  fsGroup: 2000
+securityContext:
+  allowPrivilegeEscalation: false
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+volumes:
+  - name: dex-temp-volume
+    emptyDir: {}
+volumeMounts:
+  - name: dex-temp-volume
+    mountPath: /tmp
 ingress:
   enabled: true
   annotations:
