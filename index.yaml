@@ -2,6 +2,14 @@ apiVersion: v1
 entries:
   argo-bootstrap:
   - apiVersion: v2
+    created: "2026-04-27T11:12:26.819659729Z"
+    description: Bootstraps ArgoCD with initial configuration
+    digest: d820cfa7e5569e892332874d33b92c642027cdf608fa49b00c70d4432f47074a
+    name: argo-bootstrap
+    urls:
+    - https://github.com/publishing-platform/publishing-platform-helm-charts/releases/download/argo-bootstrap-0.4.0/argo-bootstrap-0.4.0.tgz
+    version: 0.4.0
+  - apiVersion: v2
     created: "2025-01-08T17:39:27.060735058Z"
     description: Bootstraps ArgoCD with initial configuration
     digest: 9157fc2ef9efb830cdfe931dfc0db72374e01c2f96e4e1ba18e14c4525f00d05
@@ -19,6 +27,14 @@ entries:
     version: 0.3.2
   cluster-secret-store:
   - apiVersion: v2
+    created: "2026-04-27T11:12:26.981188369Z"
+    description: An external-secrets ClusterSecretStore backed by AWS SecretsManager.
+    digest: 0d14d865b54b6a74ea210e7b88050fce7039e2ed5879be79c9f2f02df01ef3a4
+    name: cluster-secret-store
+    urls:
+    - https://github.com/publishing-platform/publishing-platform-helm-charts/releases/download/cluster-secret-store-0.2.0/cluster-secret-store-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
     created: "2024-12-13T22:14:20.29357264Z"
     description: An external-secrets ClusterSecretStore backed by AWS SecretsManager.
     digest: a7ad7d36dd2126df3aa9cc6895378008265e15ded4e5d01a3ee1c84f5acbd50e
@@ -28,6 +44,14 @@ entries:
     version: 0.1.1
   cluster-secrets:
   - apiVersion: v2
+    created: "2026-04-27T11:12:27.150769417Z"
+    description: A Helm chart for defining ExternalSecrets for cluster-wide services.
+    digest: ba500c69a379146552a13ca7ce8a07f7b0bcf7808cd81df6429ec2fb03ba8dca
+    name: cluster-secrets
+    urls:
+    - https://github.com/publishing-platform/publishing-platform-helm-charts/releases/download/cluster-secrets-0.10.0/cluster-secrets-0.10.0.tgz
+    version: 0.10.0
+  - apiVersion: v2
     created: "2024-12-14T14:37:08.580529035Z"
     description: A Helm chart for defining ExternalSecrets for cluster-wide services.
     digest: 66756286858acf75c81ef5d2837929e2728d239474f5bc9f5bc545afe3e380c7
@@ -35,4 +59,4 @@ entries:
     urls:
     - https://github.com/publishing-platform/publishing-platform-helm-charts/releases/download/cluster-secrets-0.9.5/cluster-secrets-0.9.5.tgz
     version: 0.9.5
-generated: "2025-01-08T17:39:27.06076307Z"
+generated: "2026-04-27T11:12:27.150801975Z"
