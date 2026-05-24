@@ -1,0 +1,181 @@
+{{ if .Values.appEnabled }}
+{{- $fullName := include "asset-manager.fullname" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "asset-manager.labels" . | nindent 4 }}
+    app: {{ $fullName }}
+    app.kubernetes.io/name: {{ $fullName }}
+    app.kubernetes.io/component: app
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: {{ $fullName }}
+  template:
+    metadata:
+      labels:
+        {{- include "asset-manager.labels" . | nindent 8 }}
+        app: {{ $fullName }}
+        app.kubernetes.io/name: {{ $fullName }}
+        app.kubernetes.io/component: app
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+        fsGroup: 1001
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+      {{- with .Values.dnsConfig }}
+      dnsConfig:
+        {{- . | toYaml | trim | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ .Values.nginxConfigMap.name | default (printf "%s-nginx-conf" $fullName) }}
+          configMap:
+            name: {{ .Values.nginxConfigMap.name | default (printf "%s-nginx-conf" $fullName) }}
+        - name: app-tmp
+          emptyDir: {}
+        - name: nginx-tmp
+          emptyDir: {}
+        - name: asset-manager-efs
+          persistentVolumeClaim:
+            claimName: {{ $fullName }}-efs
+        {{- with .Values.extraVolumes }}
+          {{ . | toYaml | trim | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: app
+          image: "{{ required "appImage.repository is required" .Values.appImage.repository }}:{{ .Values.appImage.tag }}"
+          imagePullPolicy: {{ .Values.appImage.pullPolicy | default "Always" }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.appPort }}
+            - name: metrics
+              containerPort: {{ .Values.metricsPort }}
+          volumeMounts:
+            - name: app-tmp
+              mountPath: /tmp
+            - name: asset-manager-efs
+              mountPath: &uploads-path /mnt/asset-manager
+            {{- with .Values.appExtraVolumeMounts }}
+              {{ . | toYaml | trim | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: publishing-platform-apps-env
+          env:
+            - name: PUBLISHING_PLATFORM_UPLOADS_ROOT
+              value: *uploads-path
+            - name: PORT
+              value: "{{ .Values.appPort }}"
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.repoName }}-rails-secret-key-base
+                  key: secret-key-base
+            {{- if .Values.sentry.enabled }}
+            - name: SENTRY_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.repoName }}-sentry
+                  key: dsn
+            - name: SENTRY_RELEASE
+              value: "{{ .Values.appImage.tag }}"
+            {{- end }}
+            {{- if $.Values.redis.enabled }}
+            - name: REDIS_URL
+              value: {{ $.Values.redis.redisUrlOverride.app | default (printf "redis://%s-redis" $fullName) }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+              {{- (tpl (toYaml .) $) | trim | nindent 12 }}
+            {{- end }}
+          {{- with .Values.appResources }}
+          resources:
+            {{- . | toYaml | trim | nindent 12 }}
+          {{- end }}
+          {{- with .Values.appProbes }}
+            {{- . | toYaml | trim | nindent 10 }}
+          {{- else }}
+          startupProbe:
+            httpGet: &app-probe
+              path: /healthcheck/live
+              port: http
+            failureThreshold: 10
+            periodSeconds: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet: *app-probe
+            failureThreshold: 3
+            periodSeconds: 5
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet: *app-probe
+            failureThreshold: 2
+            periodSeconds: 5
+            timeoutSeconds: 5
+          {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "15"] # To allow time for ALB to deregister pod before termination
+        - name: nginx
+          image: "{{ .Values.nginxImage.repository }}:{{ .Values.nginxImage.tag }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.nginxPort }}
+          livenessProbe:
+            httpGet: &nginx-probe
+              path: /readyz
+              port: http
+            initialDelaySeconds: 2
+            failureThreshold: 3
+            periodSeconds: 5
+            timeoutSeconds: 20
+          readinessProbe:
+            httpGet: *nginx-probe  # Intentionally same path as liveness.
+            initialDelaySeconds: 2
+            failureThreshold: 2
+            periodSeconds: 5
+            timeoutSeconds: 15
+          volumeMounts:
+            - name: {{ .Values.nginxConfigMap.name | default (printf "%s-nginx-conf" $fullName) }}
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: nginx-tmp
+              mountPath: /tmp
+            {{- with .Values.nginxExtraVolumeMounts }}
+              {{ . | toYaml | trim | nindent 12 }}
+            {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "15"] # To allow time for ALB to deregister pod before termination
+      {{- if eq "arm64" .Values.arch }}
+      tolerations:
+        - key: arch
+          operator: Equal
+          value: {{ .Values.arch }}
+          effect: NoSchedule
+      nodeSelector:
+        kubernetes.io/arch: {{ .Values.arch }}
+      {{- end }}
+{{ end }}
