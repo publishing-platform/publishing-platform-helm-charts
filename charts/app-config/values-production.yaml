@@ -671,6 +671,73 @@ publishingPlatformApplications:
               name: draft-router-api
               key: DATABASE_URL
 
+  - name: search-api
+    helmValues:
+      dbMigrationEnabled: false
+      ingress:
+        enabled: true
+        annotations:
+          <<: [*alb-ingress-defaults]
+          alb.ingress.kubernetes.io/scheme: "internal"
+          alb.ingress.kubernetes.io/group.order: "172"
+          alb.ingress.kubernetes.io/conditions.{{ .Release.Name }}: |
+            [{"field": "host-header", "hostHeaderConfig": { "values": [
+                "search-api.{{ .Values.publishingDomainSuffix }}"
+            ]}}]
+          alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=10
+        hosts:
+          - name: search-api.{{ .Values.k8sExternalDomainSuffix }}
+      uploadAssets:
+        enabled: false
+      workers:
+        enabled: true
+        types:
+          - command: ["bin/rake", "document_sync_worker:run"]
+            name: document-sync-worker
+      redis:
+        enabled: true
+      extraEnv:
+        - name: PUBLISHED_DOCUMENTS_MESSAGE_QUEUE_NAME
+          value: search_api_published_documents
+        # - name: PUBLISHED_DOCUMENTS_MESSAGE_QUEUE_THREADS
+        #   value: "30"
+        # - name: PUBLISHED_DOCUMENTS_MESSAGE_QUEUE_MAX_UNACKED
+        #   value: "30"
+        - name: PUBLISHED_DOCUMENTS_MESSAGE_QUEUE_THREADS
+          value: "3"
+        - name: PUBLISHED_DOCUMENTS_MESSAGE_QUEUE_MAX_UNACKED
+          value: "3"
+        - name: RABBITMQ_URL
+          valueFrom:
+            secretKeyRef:
+              name: search-api
+              key: RABBITMQ_URL
+        - name: GOOGLE_CLOUD_CREDENTIALS
+          valueFrom:
+            secretKeyRef:
+              name: search-api
+              key: GOOGLE_CLOUD_CREDENTIALS
+        - name: GOOGLE_CLOUD_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: search-api
+              key: GOOGLE_CLOUD_PROJECT_ID
+        - name: GOOGLE_CLOUD_PROJECT_ID_NUMBER
+          valueFrom:
+            secretKeyRef:
+              name: search-api
+              key: GOOGLE_CLOUD_PROJECT_ID_NUMBER
+        - name: DISCOVERY_ENGINE_DEFAULT_COLLECTION_NAME
+          valueFrom:
+            secretKeyRef:
+              name: search-api
+              key: DISCOVERY_ENGINE_DEFAULT_COLLECTION_NAME
+        - name: DISCOVERY_ENGINE_DEFAULT_LOCATION_NAME
+          valueFrom:
+            secretKeyRef:
+              name: search-api
+              key: DISCOVERY_ENGINE_DEFAULT_LOCATION_NAME
+
   - name: signon
     helmValues:
       dbMigrationEnabled: true
