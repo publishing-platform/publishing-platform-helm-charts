@@ -21,7 +21,7 @@ repoName: "example"  # Dummy value, overridden in ArgoCD config.
 
 arch: amd64
 appImage:
-  repository: "132456789.dkr.ecr.eu-west-2.amazonaws.com/github/publishing-platform/asset-manager" # Dummy value, overridden in ArgoCD config.
+  repository: "132456789.dkr.ecr.eu-west-2.amazonaws.com/github/publishing-platform/asset-manager"
   tag: latest
 appPort: 3000
 
