@@ -93,7 +93,7 @@ publishingPlatformApplications:
     helmValues:
       nextEnvironment: ""
       enableWebhookIngress: true
-  
+
   - name: asset-manager
     chartPath: charts/asset-manager
     helmValues:

@@ -6,7 +6,7 @@ service:
   port: 80
 
 ingress:
-  enabled: false  
+  enabled: false
 
 # appEnabled determines whether the web app Deployment is created.
 appEnabled: true
@@ -21,7 +21,7 @@ repoName: "example"  # Dummy value, overridden in ArgoCD config.
 
 arch: amd64
 appImage:
-  repository: "" # Dummy value, overridden in ArgoCD config.
+  repository: "132456789.dkr.ecr.eu-west-2.amazonaws.com/github/publishing-platform/asset-manager" # Dummy value, overridden in ArgoCD config.
   tag: latest
 appPort: 3000
 
