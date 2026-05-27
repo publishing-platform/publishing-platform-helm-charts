@@ -715,27 +715,27 @@ publishingPlatformApplications:
         - name: GOOGLE_CLOUD_CREDENTIALS
           valueFrom:
             secretKeyRef:
-              name: search-api
+              name: search-api-google-cloud-discovery-engine-configuration
               key: GOOGLE_CLOUD_CREDENTIALS
         - name: GOOGLE_CLOUD_PROJECT_ID
           valueFrom:
             secretKeyRef:
-              name: search-api
+              name: search-api-google-cloud-discovery-engine-configuration
               key: GOOGLE_CLOUD_PROJECT_ID
         - name: GOOGLE_CLOUD_PROJECT_ID_NUMBER
           valueFrom:
             secretKeyRef:
-              name: search-api
+              name: search-api-google-cloud-discovery-engine-configuration
               key: GOOGLE_CLOUD_PROJECT_ID_NUMBER
         - name: DISCOVERY_ENGINE_DEFAULT_COLLECTION_NAME
           valueFrom:
             secretKeyRef:
-              name: search-api
+              name: search-api-google-cloud-discovery-engine-configuration
               key: DISCOVERY_ENGINE_DEFAULT_COLLECTION_NAME
         - name: DISCOVERY_ENGINE_DEFAULT_LOCATION_NAME
           valueFrom:
             secretKeyRef:
-              name: search-api
+              name: search-api-google-cloud-discovery-engine-configuration
               key: DISCOVERY_ENGINE_DEFAULT_LOCATION_NAME
 
   - name: signon
