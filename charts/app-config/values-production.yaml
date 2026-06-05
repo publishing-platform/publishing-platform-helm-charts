@@ -420,7 +420,7 @@ publishingPlatformApplications:
 
   - name: publisher
     helmValues:
-      dbMigrationEnabled: true
+      dbMigrationEnabled: false
       nginxClientMaxBodySize: &max-upload-size 500M
       ingress:
         enabled: true
