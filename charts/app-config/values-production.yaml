@@ -364,6 +364,74 @@ publishingPlatformApplications:
         - name: PUBLISHING_PLATFORM_LOCATION_HOSTNAME_PREFIX
           value: draft-
 
+  - name: fact-check-manager
+    helmValues:
+      dbMigrationEnabled: true
+      workers:
+        enabled: true
+      redis:
+        enabled: true
+      ingress:
+        enabled: true
+        annotations:
+          <<: [*alb-ingress-defaults, *alb-ingress-waf-ruleset-www]
+          alb.ingress.kubernetes.io/group.order: "155"
+          alb.ingress.kubernetes.io/conditions.{{ .Release.Name }}: >
+            [{"field": "host-header", "hostHeaderConfig": { "values": [
+                "fact-check-manager.{{ .Values.publishingDomainSuffix }}"
+            ]}}]
+          alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=1
+        hosts:
+          - name: fact-check-manager.{{ .Values.k8sExternalDomainSuffix }}
+      extraEnv:
+        - name: INSTANCE_NAME
+          value: production
+        - name: PUBLISHER_BEARER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: signon-token-fact-check-manager-publisher
+              key: bearer_token
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: fact-check-manager
+              key: DATABASE_URL
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_ID
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-fact-check-manager
+              key: oauth_id
+        - name: PUBLISHING_PLATFORM_SSO_OAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: signon-app-fact-check-manager
+              key: oauth_secret
+        - name: SMTP_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: fact-check-manager
+              key: SMTP_ENDPOINT
+        - name: SMTP_PORT
+          valueFrom:
+            secretKeyRef:
+              name: fact-check-manager
+              key: SMTP_PORT
+        - name: SMTP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: fact-check-manager
+              key: SMTP_USERNAME
+        - name: SMTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: fact-check-manager
+              key: SMTP_PASSWORD
+        - name: JWT_AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authenticating-proxy
+              key: JWT_AUTH_SECRET
+
   - name: frontend
     helmValues:
       uploadFrontendErrorPagesEnabled: true
